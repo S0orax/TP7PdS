@@ -102,8 +102,26 @@ void rapide_seq(bloc_t bloc_init) {
     } while (!pile_vide(&p));
 }
 
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t cond;
+
+void *th_rapide(void *arg) {
+    static int count = 0;
+
+    pthread_mutex_lock(&mutex);
+    do {
+        if(!pile_vide(&arg->pile)) {
+            arg->bloc = depile(&pile);
+        } else {
+            pthread_cond_wait(cond);
+        }
+    } while(count != 0);
+}
+
 void rapide(pos_t taille, unsigned int nb_threads) {
     bloc_t bloc;
+    pile p;
+    pthread_t *tids;
 
     bloc.debut = 0;
     bloc.fin   = taille - 1;
@@ -115,7 +133,13 @@ void rapide(pos_t taille, unsigned int nb_threads) {
 
     assert(nb_threads > 1);
 
-    fprintf(stderr, "À implémenter !\n");
+    /*fprintf(stderr, "À implémenter !\n");*/
+    init_pile(&p);
+    tids = (pthread_t *) malloc(sizeof(pthread_t) * nb_threads);
+    assert(tids != NULL);
+
+    free(tids);
+    free(cond);
 
     assert(0);
 }
