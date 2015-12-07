@@ -104,6 +104,7 @@ void rapide_seq(bloc_t bloc_init) {
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+unsigned int nb_threads_work;
 pile th_pile;
 
 void *th_rapide(void *arg) {
@@ -134,6 +135,7 @@ void *th_rapide(void *arg) {
 void rapide(pos_t taille, unsigned int nb_threads) {
     bloc_t bloc;
     pthread_t *tids;
+    int i;
 
     bloc.debut = 0;
     bloc.fin   = taille - 1;
@@ -146,9 +148,20 @@ void rapide(pos_t taille, unsigned int nb_threads) {
     assert(nb_threads > 1);
 
     /*fprintf(stderr, "À implémenter !\n");*/
+<<<<<<< HEAD
     init_pile(&th_pile);
+=======
+>>>>>>> 681e4f61f0e1321370b9753933da7ca73b8ed903
     tids = (pthread_t *) malloc(sizeof(pthread_t) * nb_threads);
     assert(tids != NULL);
+
+    for(i = 0; i < nb_threads; i++) {
+        assert(pthread_create(&tids[i], NULL, th_rapide, NULL) == 0);
+    }
+
+    for(i = 0; i < nb_threads; i++) {
+        assert(pthread_join(tids[i], NULL) == 0);
+    }
 
     free(tids);
 
