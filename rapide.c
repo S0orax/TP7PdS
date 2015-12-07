@@ -103,25 +103,36 @@ void rapide_seq(bloc_t bloc_init) {
 }
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t cond;
+pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+unsigned int nb_threads_work;
+pile th_pile;
 
 void *th_rapide(void *arg) {
-    static int count = 0;
+    bloc_t bloc;
+    bloc_t blocs[2];
+    int i, nb_blocs;
 
-    pthread_mutex_lock(&mutex);
-    do {
-        if(!pile_vide(&arg->pile)) {
-            arg->bloc = depile(&pile);
-        } else {
-            pthread_cond_wait(cond);
+    while(1) {
+        pthread_mutex_lock(&mutex);
+        while(pile_vide(&th_pile) && nb_threads_work > 0) {
+            pthread_cond_wait(&cond, &mutex);
         }
-    } while(count != 0);
+        if(pile_vide(&th_pile)) {
+            pthread_cond_broadcast(&cond);
+            return NULL;
+        }
+        bloc = depile(&th_pile);
+        pthread_mutex_unlock(&mutex);
+        nb_blocs = rapide_decoupebloc(bloc, blocs);
+        for(i = 0; i < nb_blocs; i++)
+            empile(&th_pile, blocs[i]);
+    }
 }
 
 void rapide(pos_t taille, unsigned int nb_threads) {
     bloc_t bloc;
-    pile p;
     pthread_t *tids;
+    int i;
 
     bloc.debut = 0;
     bloc.fin   = taille - 1;
@@ -134,12 +145,18 @@ void rapide(pos_t taille, unsigned int nb_threads) {
     assert(nb_threads > 1);
 
     /*fprintf(stderr, "À implémenter !\n");*/
-    init_pile(&p);
     tids = (pthread_t *) malloc(sizeof(pthread_t) * nb_threads);
     assert(tids != NULL);
 
+    for(i = 0; i < nb_threads; i++) {
+        assert(pthread_create(&tids[i], NULL, th_rapide, NULL) == 0);
+    }
+
+    for(i = 0; i < nb_threads; i++) {
+        assert(pthread_join(tids[i], NULL) == 0);
+    }
+
     free(tids);
-    free(cond);
 
     assert(0);
 }
