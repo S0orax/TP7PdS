@@ -1,3 +1,6 @@
+ORIEUX Baptise
+DUBOIS Yann
+
 /usr/bin/time -f %e commande
 
 Verrou pôur les accès à la pile
@@ -23,3 +26,8 @@ while(1) {
 	empile
 	deverouille
 }
+
+Question 2 tri rapide :
+
+Le gain obtenu n'est pas énorme, ce qui nous fait pensé qu'il y a
+un soucis dans l'algo.

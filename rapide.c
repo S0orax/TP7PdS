@@ -10,7 +10,7 @@
 #include "rapide.h"
 #include "main.h"
 
-unsigned long seuil_bloc_long = 1;
+unsigned long seuil_bloc_long = 4096;
 
 base_t *tableau;
 
@@ -114,11 +114,13 @@ void *th_rapide(void *arg) {
 
     while(1) {
         pthread_mutex_lock(&mutex);
-        while(pile_vide(&th_pile) && nb_threads_work > 0) {
+        while(pile_vide(&th_pile) && nb_threads_work > 1) {
+            nb_threads_work--;
             pthread_cond_wait(&cond, &mutex);
         }
         if(pile_vide(&th_pile)) {
             pthread_cond_broadcast(&cond);
+            pthread_mutex_unlock(&mutex);
             return NULL;
         }
         bloc = depile(&th_pile);
@@ -126,6 +128,10 @@ void *th_rapide(void *arg) {
         nb_blocs = rapide_decoupebloc(bloc, blocs);
         pthread_mutex_lock(&mutex);
         for(i = 0; i< nb_blocs; i++) {
+            if(blocs[i].fin - blocs[i].debut < seuil_bloc_long) {
+                rapide_seq(blocs[i]);
+                continue;
+            }
             empile(&th_pile, blocs[i]);
         }
         pthread_mutex_unlock(&mutex);
@@ -145,17 +151,18 @@ void rapide(pos_t taille, unsigned int nb_threads) {
         return;
     }
 
+
     assert(nb_threads > 1);
 
     /*fprintf(stderr, "À implémenter !\n");*/
-<<<<<<< HEAD
+
     init_pile(&th_pile);
-=======
->>>>>>> 681e4f61f0e1321370b9753933da7ca73b8ed903
+    empile(&th_pile, bloc);
     tids = (pthread_t *) malloc(sizeof(pthread_t) * nb_threads);
     assert(tids != NULL);
 
     for(i = 0; i < nb_threads; i++) {
+        nb_threads_work++;
         assert(pthread_create(&tids[i], NULL, th_rapide, NULL) == 0);
     }
 
@@ -165,5 +172,5 @@ void rapide(pos_t taille, unsigned int nb_threads) {
 
     free(tids);
 
-    assert(0);
+    return;
 }
